@@ -10,9 +10,9 @@ app.use(bodyParser.json());
 app.use(cors());
 
 aws.config.update({
-    accessKeyId: 'ASIAXT2EXUQHWWOJSDVC',
-    secretAccessKey: '3wX61L4QLtvdIDkUTCKIT0A8Q0NAvUNw2Ri9ZqRY',
-    sessionToken: 'FwoGZXIvYXdzEBEaDLQuNuh3mnjY/nEzFCLPAbG2mR2Qa2a9+tvunleHj85sPwhawEJtQSiZJ7TWNaxErlLNZh/BRrindpO/2goedVS+WAL12dz6XqzaZrNH0LNgwgp4kQw88+HpSS0uBeB6hpvg+8cnCpFVHcJ2b4iZm0cYd56hMeyd2Ys3GyCMBaqzYGJVb8q4hPAlXpnZTuuJnJqo/wTTnockw8Ig3FDBR4OOL+ptTC4npdZMGZkBRdAkvzk1JUTBU3utvDTp0dVGcJ9m7W5NsyfTBxZ9CrfZBROAFzookT2ezbrL22MFvyjbjdiMBjIt1NtYuJgxSIVV6vUwvat944yWG/RokYncYHKm5LAPiGiZj+sIOT0ln+OkjhyK',
+    accessKeyId: 'ASIAXT2EXUQHZESFYQKX',
+    secretAccessKey: 'UOrob8mPVMZBNG75vPQG/AsAe5dO/wlVumpz0JGr',
+    sessionToken: 'FwoGZXIvYXdzELX//////////wEaDP1DNdvyH2UKn+1HTyLPAZ7KQJEyF5ghee+WXbbeo+lwZ5AsjtQnC5Gq1xdObTNDbh1E6kpP1tOK3AH9VjgPIbUX52tII7YNNib8DDbdgeOTTOZX1Dvk7MmZN3sNzZFVdZ95oFwUZ4iWQc+Fyi+qg0rVfwNvPxx3RAWqRT9kYWbl55uow/2wANizy6bQrV6GrpdbCtbfsk7jdXhoUWLsoV1b7Sgq2E+/fgmYfT4L0Y2YOw8/DPHIezlQWReagpWHh6MHvkquV5OMWIOK7R3AhLlwEBQLFC6pe7R4brZZZCil/vuMBjItm9hrAlIdiZ+mVkIIGdthfQmEy/eA6wBpzZEHwSV7LN09Folta3zakBYZUHLg',
     region: 'us-east-1',
     signatureVersion: 'v4',
 });
@@ -88,7 +88,62 @@ app.post('/api/text', (req, res) => {
         console.log(data);
 	});
 });
+app.post('/api/compare', (req, res) => {
+	var params = {
+		SimilarityThreshold: 90, 
+        SourceImage: {
+            S3Object: {
+            Bucket: "rek-hwng", 
+            Name: "mysourceimage"
+            }
+        }, 
+        TargetImage: {
+            S3Object: {
+                Bucket: "rek-hwng", 
+                Name: req.body.name,
+            }
+        }
+	};
 
+	rekognition.compareFaces(params, (err, data) => {
+        if (err) console.log(err, err.stack);
+        else res.send({ data: data });
+        console.log(data);
+    });
+});
+app.post('/api/faces',(req, res)=>{
+    var params = {
+        Image: {
+         S3Object: {
+          Bucket: "rek-hwng", 
+          Name: req.body.name,
+         }
+        },
+        Attributes: [
+            "ALL"
+          ]
+       };
+       rekognition.detectFaces(params,(err, data) =>{
+         if (err) console.log(err, err.stack); // an error occurred
+          else res.send({data: data})    
+          console.log(JSON.stringify(data, null, '\t'));   
+        });
+});
+app.post('/api/celeb',(req, res)=>{
+    var params = {
+        Image: {
+         S3Object: {
+          Bucket: "rek-hwng", 
+          Name: req.body.name,
+         }
+        },
+       };
+       rekognition.recognizeCelebrities(params,(err, data) =>{
+         if (err) console.log(err, err.stack); // an error occurred
+          else res.send({data: data})    
+          console.log(data);   
+        });
+});
 
 app.listen(5000, () => {
     console.log('Server listening on port 5000!');
