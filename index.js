@@ -10,9 +10,9 @@ app.use(bodyParser.json());
 app.use(cors());
 
 aws.config.update({
-    accessKeyId: 'ASIAXT2EXUQHZESFYQKX',
-    secretAccessKey: 'UOrob8mPVMZBNG75vPQG/AsAe5dO/wlVumpz0JGr',
-    sessionToken: 'FwoGZXIvYXdzELX//////////wEaDP1DNdvyH2UKn+1HTyLPAZ7KQJEyF5ghee+WXbbeo+lwZ5AsjtQnC5Gq1xdObTNDbh1E6kpP1tOK3AH9VjgPIbUX52tII7YNNib8DDbdgeOTTOZX1Dvk7MmZN3sNzZFVdZ95oFwUZ4iWQc+Fyi+qg0rVfwNvPxx3RAWqRT9kYWbl55uow/2wANizy6bQrV6GrpdbCtbfsk7jdXhoUWLsoV1b7Sgq2E+/fgmYfT4L0Y2YOw8/DPHIezlQWReagpWHh6MHvkquV5OMWIOK7R3AhLlwEBQLFC6pe7R4brZZZCil/vuMBjItm9hrAlIdiZ+mVkIIGdthfQmEy/eA6wBpzZEHwSV7LN09Folta3zakBYZUHLg',
+    accessKeyId: 'ASIAXT2EXUQH7ABXTVIM',
+    secretAccessKey: 'YicjE8TTc+sUktxZRpzo68RfwWhNejthAMs+5+dy',
+    sessionToken: 'FwoGZXIvYXdzEEoaDEUTSIE15BM79sdJnSLPAfXpqjFGo8KWhgR8Ch7bwGk/bLV6KjwhaewP3RYUOTRIEbWKfS7F8IbRHk6BSc0moXIp8WpnQk+zERUz5mZQQf+hLU2TULbm6+L0bEa7W/0jOtk1B+dD8J1sseS4w1rm3HiDg7pIRgevgh3PMCNSg6nvZg4wLBV84XdOih9XtrpoDVPImAx/tiqNi4Rt+ASdp4RMssn19CAezCbZpZhj/7BlH/axJwAKS2yf5MWpw6Wt1dZnKpkjz2mbONCzHRmwtMGdABpuDKzqShvWzBlNhCiY4ZyNBjItwkvCLdIze2DQ+zjmShIhE34L/xo6l6uOZuOST1mUpD+mf+fCeIII/utCkABe',
     region: 'us-east-1',
     signatureVersion: 'v4',
 });
@@ -40,6 +40,29 @@ const upload = multer({
 
 
 app.post('/api/upload', upload.array('file', 1), (req, res) => {
+    res.send({ file: req.file});
+});
+
+const uploads3 = multer({
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'application/octet-stream' || file.mimetype === 'video/mp4'
+            || file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type'), false);
+        }
+    },
+    storage: multerS3({
+        acl: 'public-read',
+        s3,
+        bucket: 'rek-hwng',
+        key: function (req, file, cb) {
+            req.file = Date.now() + file.originalname;
+            cb(null, Date.now() + file.originalname);
+        }
+    })
+});
+app.post('/api/uploads3', uploads3.array('file', 1), (req, res) => {
     res.send({ file: req.file});
 });
 
@@ -94,15 +117,15 @@ app.post('/api/compare', (req, res) => {
         SourceImage: {
             S3Object: {
             Bucket: "rek-hwng", 
-            Name: "mysourceimage"
+            Name: req.body.name,
             }
         }, 
         TargetImage: {
             S3Object: {
                 Bucket: "rek-hwng", 
-                Name: req.body.name,
+                Name: req.body.img,
             }
-        }
+        },
 	};
 
 	rekognition.compareFaces(params, (err, data) => {
@@ -141,7 +164,7 @@ app.post('/api/celeb',(req, res)=>{
        rekognition.recognizeCelebrities(params,(err, data) =>{
          if (err) console.log(err, err.stack); // an error occurred
           else res.send({data: data})    
-          console.log(data);   
+          console.log('celeb',data);   
         });
 });
 
